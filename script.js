@@ -33,6 +33,11 @@ let tareaActualIndex = -1
 
 // Escuchar cambios en Firestore en tiempo real
 function inicializarListeners() {
+  if (!db || !auth) {
+    console.error("Firebase no está inicializado");
+    return;
+  }
+
   // Listener para responsables
   db.collection("responsables").onSnapshot((snapshot) => {
     responsables = []
@@ -240,7 +245,15 @@ document.getElementById("agregarResponsable").onclick=()=>{
 const nombre=document.getElementById("nombreResponsable").value
 const gmail=document.getElementById("gmailResponsable").value
 
-if(!nombre || !gmail)return
+if(!nombre || !gmail) {
+  alert("Por favor completa nombre y correo")
+  return
+}
+
+if (!db) {
+  alert("Firebase no está inicializado")
+  return
+}
 
 db.collection("responsables").add({
   nombre: nombre,
@@ -250,6 +263,7 @@ db.collection("responsables").add({
   document.getElementById("gmailResponsable").value=""
 }).catch((error) => {
   console.error("Error al agregar responsable:", error)
+  alert("Error al agregar responsable: " + error.message)
 })
 
 }
@@ -258,8 +272,19 @@ db.collection("responsables").add({
 
 document.getElementById("btnAgregarTarea").onclick=()=>{
 
+const nombre = document.getElementById("taskName").value
+if (!nombre) {
+  alert("La tarea debe tener un nombre")
+  return
+}
+
+if (!db) {
+  alert("Firebase no está inicializado")
+  return
+}
+
 let tarea={
-  nombre:document.getElementById("taskName").value,
+  nombre: nombre,
   responsables:responsablesSeleccionados,
   descripcion:document.getElementById("taskDesc").value,
   pidio:document.getElementById("taskPidio").value,
@@ -289,6 +314,7 @@ db.collection("tareas").add(tarea)
   })
   .catch((error) => {
     console.error("Error al agregar tarea:", error)
+    alert("Error al agregar tarea: " + error.message)
   })
 
 }
