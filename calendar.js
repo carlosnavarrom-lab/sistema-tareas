@@ -4,6 +4,9 @@ const tareas=JSON.parse(localStorage.getItem("misTareas"))||[]
 
 tareas.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha))
 
+// limpiar contenido previo para evitar duplicados
+timeline.innerHTML = ''
+
 tareas.forEach(t=>{
 
 const fecha=new Date(t.fecha)
@@ -14,8 +17,18 @@ const mes=fecha.toLocaleString('es',{month:'short'})
 
 const div=document.createElement("div")
 
-div.className="event "+t.prioridad.toLowerCase()
-
+    // determinar si la tarea realmente está completada
+    const done = (t.estado||'').toLowerCase() === 'completada'
+    div.className="event "+(t.prioridad||'').toLowerCase();
+    if(done){
+        div.classList.add('completada');
+    }
+    // elegir color tenue según prioridad (no se muestra si completada gracias a CSS)
+    const evColor = (t.prioridad||'').toLowerCase() === 'alta' ? '#ffcccc'
+                  : (t.prioridad||'').toLowerCase() === 'media' ? '#fff9cc'
+                  : (t.prioridad||'').toLowerCase() === 'baja' ? '#ccffcc'
+                  : '#6c63ff';
+    div.style.setProperty('--event-line-color', evColor)
 div.innerHTML=`
 
 <div class="event-date">
@@ -31,6 +44,8 @@ div.innerHTML=`
 <div>Responsable: ${t.respNom}</div>
 
 <div>Fecha límite: ${t.fechaLimite||"Sin fecha"}</div>
+
+${done ? '<div class="completed-label">Completado</div>' : ''}
 
 `
 
