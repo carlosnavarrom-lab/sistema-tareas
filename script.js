@@ -26,11 +26,45 @@ if ("Notification" in window) {
     Notification.requestPermission();
 }
 
-let tareas = JSON.parse(localStorage.getItem("misTareas")) || []
-let responsables = JSON.parse(localStorage.getItem("responsables")) || []
+let tareas = []
+let responsables = []
 let responsablesSeleccionados = []
-
 let tareaActualIndex = -1
+
+// Escuchar cambios en Firestore en tiempo real
+function inicializarListeners() {
+  // Listener para responsables
+  db.collection("responsables").onSnapshot((snapshot) => {
+    responsables = []
+    snapshot.forEach((doc) => {
+      responsables.push({
+        id: doc.id,
+        ...doc.data()
+      })
+    })
+    cargarResponsables()
+  })
+
+  // Listener para tareas
+  db.collection("tareas").onSnapshot((snapshot) => {
+    tareas = []
+    snapshot.forEach((doc) => {
+      tareas.push({
+        id: doc.id,
+        ...doc.data()
+      })
+    })
+    renderTareas()
+  })
+}
+
+// Inicializar cuando esté lista la autenticación
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log("Usuario autenticado:", user.uid)
+    inicializarListeners()
+  }
+})
 
 
 
@@ -190,11 +224,12 @@ cont.appendChild(div)
 
 function eliminarResponsable(i){
 
-responsables.splice(i,1)
+const responsableId = responsables[i].id
 
-localStorage.setItem("responsables",JSON.stringify(responsables))
-
-cargarResponsables()
+db.collection("responsables").doc(responsableId).delete()
+  .catch((error) => {
+    console.error("Error al eliminar responsable:", error)
+  })
 
 }
 
@@ -207,17 +242,15 @@ const gmail=document.getElementById("gmailResponsable").value
 
 if(!nombre || !gmail)return
 
-responsables.push({
-nombre:nombre,
-gmail:gmail
+db.collection("responsables").add({
+  nombre: nombre,
+  gmail: gmail
+}).then(() => {
+  document.getElementById("nombreResponsable").value=""
+  document.getElementById("gmailResponsable").value=""
+}).catch((error) => {
+  console.error("Error al agregar responsable:", error)
 })
-
-localStorage.setItem("responsables",JSON.stringify(responsables))
-
-document.getElementById("nombreResponsable").value=""
-document.getElementById("gmailResponsable").value=""
-
-cargarResponsables()
 
 }
 
@@ -226,38 +259,37 @@ cargarResponsables()
 document.getElementById("btnAgregarTarea").onclick=()=>{
 
 let tarea={
-
-nombre:document.getElementById("taskName").value,
-responsables:responsablesSeleccionados,
-descripcion:document.getElementById("taskDesc").value,
-pidio:document.getElementById("taskPidio").value,
-fecha:document.getElementById("fecha").value,
-fechaLimite:document.getElementById("fechaLimite").value,
-prioridad:document.getElementById("prioridad").value,
-estado:"pendiente"
-
+  nombre:document.getElementById("taskName").value,
+  responsables:responsablesSeleccionados,
+  descripcion:document.getElementById("taskDesc").value,
+  pidio:document.getElementById("taskPidio").value,
+  fecha:document.getElementById("fecha").value,
+  fechaLimite:document.getElementById("fechaLimite").value,
+  prioridad:document.getElementById("prioridad").value,
+  estado:"pendiente",
+  createdAt: new Date()
 }
 
-tareas.push(tarea)
+db.collection("tareas").add(tarea)
+  .then(() => {
+    document.getElementById("taskName").value=""
+    document.getElementById("taskDesc").value=""
+    document.getElementById("taskPidio").value=""
+    document.getElementById("fecha").value=""
+    document.getElementById("fechaLimite").value=""
+    responsablesSeleccionados = []
+    actualizarBadgesResponsables()
 
-localStorage.setItem("misTareas",JSON.stringify(tareas))
-
-// ENVIAR CORREO A TODOS LOS RESPONSABLES
-responsablesSeleccionados.forEach(resp => {
-  if(resp){
-    enviarCorreo(resp.nombre, resp.gmail, tarea)
-  }
-})
-
-document.getElementById("taskName").value=""
-document.getElementById("taskDesc").value=""
-document.getElementById("taskPidio").value=""
-document.getElementById("fecha").value=""
-document.getElementById("fechaLimite").value=""
-responsablesSeleccionados = []
-actualizarBadgesResponsables()
-
-renderTareas()
+    // ENVIAR CORREO A TODOS LOS RESPONSABLES
+    responsablesSeleccionados.forEach(resp => {
+      if(resp){
+        enviarCorreo(resp.nombre, resp.gmail, tarea)
+      }
+    })
+  })
+  .catch((error) => {
+    console.error("Error al agregar tarea:", error)
+  })
 
 }
 
@@ -333,11 +365,12 @@ document.querySelector("#"+t.estado+" .task-list").appendChild(card)
 
 function eliminarTarea(i){
 
-tareas.splice(i,1)
+const tareaId = tareas[i].id
 
-localStorage.setItem("misTareas",JSON.stringify(tareas))
-
-renderTareas()
+db.collection("tareas").doc(tareaId).delete()
+  .catch((error) => {
+    console.error("Error al eliminar tarea:", error)
+  })
 
 }
 
@@ -425,19 +458,22 @@ const tarea = tareas[tareaActualIndex]
 const checkboxes = document.querySelectorAll(".responsable-edit-checkbox:checked")
 const nuevosResponsables = Array.from(checkboxes).map(cb => responsables[cb.value])
 
-tarea.nombre = document.getElementById("editNombre").value
-tarea.responsables = nuevosResponsables
-tarea.pidio = document.getElementById("editPidio").value
-tarea.descripcion = document.getElementById("editDescripcion").value
-tarea.fecha = document.getElementById("editFecha").value
-tarea.fechaLimite = document.getElementById("editFechaLimite").value
-tarea.prioridad = document.getElementById("editPrioridad").value
-tarea.estado = document.getElementById("editEstado").value
+const tareaId = tarea.id
 
-localStorage.setItem("misTareas", JSON.stringify(tareas))
-
-abrirDetallesTarea(tareaActualIndex)
-renderTareas()
+db.collection("tareas").doc(tareaId).update({
+  nombre: document.getElementById("editNombre").value,
+  responsables: nuevosResponsables,
+  pidio: document.getElementById("editPidio").value,
+  descripcion: document.getElementById("editDescripcion").value,
+  fecha: document.getElementById("editFecha").value,
+  fechaLimite: document.getElementById("editFechaLimite").value,
+  prioridad: document.getElementById("editPrioridad").value,
+  estado: document.getElementById("editEstado").value
+}).then(() => {
+  abrirDetallesTarea(tareaActualIndex)
+}).catch((error) => {
+  console.error("Error al actualizar tarea:", error)
+})
 
 }
 
@@ -557,11 +593,13 @@ default: return '#6c63ff'
 
 function completarTarea(i){
 
-tareas[i].estado = 'completada'
+const tareaId = tareas[i].id
 
-localStorage.setItem("misTareas",JSON.stringify(tareas))
-
-renderTareas()
+db.collection("tareas").doc(tareaId).update({
+  estado: "completada"
+}).catch((error) => {
+  console.error("Error al completar tarea:", error)
+})
 
 }
 
@@ -581,11 +619,13 @@ const index = e.dataTransfer.getData('text/plain')
 
 const newEstado = column.id
 
-tareas[index].estado = newEstado
+const tareaId = tareas[index].id
 
-localStorage.setItem("misTareas",JSON.stringify(tareas))
-
-renderTareas()
+db.collection("tareas").doc(tareaId).update({
+  estado: newEstado
+}).catch((error) => {
+  console.error("Error al actualizar estado:", error)
+})
 
 })
 
@@ -604,6 +644,4 @@ document.getElementById("btnCerrarSeleccion").onclick=()=>{
   cerrarSeleccionResponsables()
 }
 
-
-cargarResponsables()
-renderTareas()
+// Los listeners de Firestore se inicializan cuando se autentica el usuario

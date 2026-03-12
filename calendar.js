@@ -41,7 +41,7 @@ div.innerHTML=`
 
 <div class="event-title">${t.nombre}</div>
 
-<div>Responsable: ${t.respNom}</div>
+<div>Responsables: ${t.responsables && t.responsables.length > 0 ? t.responsables.map(r => r.nombre).join(", ") : "Sin asignar"}</div>
 
 <div>Fecha límite: ${t.fechaLimite||"Sin fecha"}</div>
 
