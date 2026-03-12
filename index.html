@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <title>Gestión de tareas</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
 </head>
@@ -46,8 +47,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Responsable *</label>
-                    <select id="responsableSelect"></select>
+                    <label>Responsables</label>
+                    <button type="button" id="btnAbrirSeleccionResponsables" class="btn" style="width:100%; text-align:left;">
+                        Selecciona responsables...
+                    </button>
+                    <div id="responsablesSeleccionados" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
                 </div>
 
                 <div class="form-group">
@@ -68,7 +72,6 @@
                         <option>Alta</option>
                     </select>
                 </div>
-
 
                 <div class="form-group">
                     <label>Descripción de la tarea (opcional)</label>
@@ -125,7 +128,6 @@
             <div class="responsable-form">
 
                 <input id="nombreResponsable" placeholder="Nombre">
-
                 <input id="gmailResponsable" placeholder="Correo Gmail">
 
                 <button id="agregarResponsable">
@@ -144,6 +146,29 @@
 
     </div>
 
+
+    <div id="modalSeleccionarResponsables" class="modal">
+
+        <div class="modal-content">
+
+            <h2>Selecciona Responsables</h2>
+
+            <div id="listaResponsablesCheckbox" style="max-height: 400px; overflow-y: auto;"></div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button id="btnConfirmarResponsables" class="btn" style="background:#2ecc71; color:white; flex:1;">
+                    Confirmar
+                </button>
+                <button id="btnCerrarSeleccion" class="btn" style="flex:1;">
+                    Cancelar
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+
     <div id="modalTareaDetail" class="modal">
 
         <div class="modal-content modal-detail">
@@ -153,12 +178,17 @@
             <h2>Detalles de la Tarea</h2>
 
             <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button id="btnEditarTarea" class="btn" style="background:#4c9aff; color:white; flex:1;" onclick="editarTarea()">
+
+                <button id="btnEditarTarea" class="btn" style="background:#4c9aff; color:white; flex:1;"
+                    onclick="editarTarea()">
                     Editar
                 </button>
-                <button id="btnGuardarTarea" class="btn" style="background:#2ecc71; color:white; flex:1; display:none;" onclick="guardarTareaEditada()">
+
+                <button id="btnGuardarTarea" class="btn" style="background:#2ecc71; color:white; flex:1; display:none;"
+                    onclick="guardarTareaEditada()">
                     Guardar
                 </button>
+
             </div>
 
             <div id="detalleContenido" class="detalle-contenido"></div>
@@ -170,6 +200,16 @@
         </div>
 
     </div>
+
+
+    <!-- EMAILJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <script>
+        (function () {
+            emailjs.init("veL9Rn9EWFP80gzaD");
+        })();
+    </script>
 
     <script src="script.js"></script>
 
