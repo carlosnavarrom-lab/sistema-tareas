@@ -342,6 +342,106 @@ renderTareas()
 }
 
 
+function abrirEditarTarea(indice){
+abrirDetallesTarea(indice)
+}
+
+function editarTarea(){
+
+const tarea = tareas[tareaActualIndex]
+const contenido = document.getElementById("detalleContenido")
+
+let responsablesOpciones = responsables.map((r, i) => {
+    const isSelected = tarea.responsables && tarea.responsables.some(tr => tr.nombre === r.nombre)
+    return `<label style="display:block; margin:8px 0; cursor:pointer;">
+        <input type="checkbox" value="${i}" ${isSelected ? 'checked' : ''} class="responsable-edit-checkbox">
+        ${r.nombre}
+    </label>`
+}).join('')
+
+contenido.innerHTML = `
+<div class="detalle-item">
+    <div class="detalle-label">Título</div>
+    <input type="text" id="editNombre" value="${tarea.nombre}" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Responsables</div>
+    <div style="border:1px solid #ddd; padding:12px; border-radius:4px; background:white;">
+        ${responsablesOpciones}
+    </div>
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Quién pidió</div>
+    <input type="text" id="editPidio" value="${tarea.pidio || ''}" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Descripción</div>
+    <textarea id="editDescripcion" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box; min-height:80px;">${tarea.descripcion || ''}</textarea>
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Fecha inicio</div>
+    <input type="date" id="editFecha" value="${tarea.fecha || ''}" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Fecha límite</div>
+    <input type="date" id="editFechaLimite" value="${tarea.fechaLimite || ''}" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Prioridad</div>
+    <select id="editPrioridad" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+        <option ${tarea.prioridad === 'Baja' ? 'selected' : ''}>Baja</option>
+        <option ${tarea.prioridad === 'Media' ? 'selected' : ''}>Media</option>
+        <option ${tarea.prioridad === 'Alta' ? 'selected' : ''}>Alta</option>
+    </select>
+</div>
+
+<div class="detalle-item">
+    <div class="detalle-label">Estado</div>
+    <select id="editEstado" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box;">
+        <option ${tarea.estado === 'pendiente' ? 'selected' : ''}>pendiente</option>
+        <option ${tarea.estado === 'en-curso' ? 'selected' : ''}>en-curso</option>
+        <option ${tarea.estado === 'revision' ? 'selected' : ''}>revision</option>
+        <option ${tarea.estado === 'listo' ? 'selected' : ''}>listo</option>
+    </select>
+</div>
+`
+
+document.getElementById("btnEditarTarea").style.display = "none"
+document.getElementById("btnGuardarTarea").style.display = "block"
+
+}
+
+function guardarTareaEditada(){
+
+const tarea = tareas[tareaActualIndex]
+
+// Obtener responsables seleccionados
+const checkboxes = document.querySelectorAll(".responsable-edit-checkbox:checked")
+const nuevosResponsables = Array.from(checkboxes).map(cb => responsables[cb.value])
+
+tarea.nombre = document.getElementById("editNombre").value
+tarea.responsables = nuevosResponsables
+tarea.pidio = document.getElementById("editPidio").value
+tarea.descripcion = document.getElementById("editDescripcion").value
+tarea.fecha = document.getElementById("editFecha").value
+tarea.fechaLimite = document.getElementById("editFechaLimite").value
+tarea.prioridad = document.getElementById("editPrioridad").value
+tarea.estado = document.getElementById("editEstado").value
+
+localStorage.setItem("misTareas", JSON.stringify(tareas))
+
+abrirDetallesTarea(tareaActualIndex)
+renderTareas()
+
+}
+
+
 
 document.getElementById("btnOpenModal").onclick=()=>{
 document.getElementById("modalResponsables").style.display="flex"
