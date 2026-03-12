@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Gestión de tareas</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <div class="wrapper">
+
+        <header>
+
+            <h1>Gestión de tareas</h1>
+
+            <div>
+
+                <button id="btnOpenModal" class="btn">
+                    Responsables
+                </button>
+
+                <a href="calendario.html">
+                    <button class="btn">
+                        Calendario
+                    </button>
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <section class="form-container">
+
+            <div class="inputs-grid">
+
+                <div class="form-group">
+                    <label>Título de la tarea *</label>
+                    <input id="taskName" placeholder="Ingresa el nombre/título de la tarea">
+                </div>
+
+                <div class="form-group">
+                    <label>Responsable *</label>
+                    <select id="responsableSelect"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha de inicio *</label>
+                    <input type="date" id="fecha">
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha límite *</label>
+                    <input type="date" id="fechaLimite">
+                </div>
+
+                <div class="form-group">
+                    <label>Prioridad *</label>
+                    <select id="prioridad">
+                        <option>Baja</option>
+                        <option>Media</option>
+                        <option>Alta</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción de la tarea (opcional)</label>
+                    <input id="taskDesc" placeholder="Describe los detalles de la tarea">
+                </div>
+
+                <div class="form-group">
+                    <label>¿Quién pidió la tarea? (opcional)</label>
+                    <input id="taskPidio" placeholder="Nombre de quien pidió la tarea">
+                </div>
+
+                <button id="btnAgregarTarea" class="btn">
+                    Agregar
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <main class="board">
+
+            <div class="column" id="pendiente">
+                <h2 class="col-header">Pendiente</h2>
+                <div class="task-list"></div>
+            </div>
+
+            <div class="column" id="en-curso">
+                <h2 class="col-header">En curso</h2>
+                <div class="task-list"></div>
+            </div>
+
+            <div class="column" id="revision">
+                <h2 class="col-header">Revisión</h2>
+                <div class="task-list"></div>
+            </div>
+
+            <div class="column" id="listo">
+                <h2 class="col-header">Listo</h2>
+                <div class="task-list"></div>
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <div id="modalResponsables" class="modal">
+
+        <div class="modal-content">
+
+            <h2>Responsables</h2>
+
+            <div class="responsable-form">
+
+                <input id="nombreResponsable" placeholder="Nombre">
+
+                <input id="gmailResponsable" placeholder="Correo Gmail">
+
+                <button id="agregarResponsable">
+                    Agregar
+                </button>
+
+            </div>
+
+            <div id="listaResponsables"></div>
+
+            <button id="cerrarModal" class="btn">
+                Cerrar
+            </button>
+
+        </div>
+
+    </div>
+
+    <div id="modalTareaDetail" class="modal">
+
+        <div class="modal-content modal-detail">
+
+            <button id="cerrarModalTarea" class="btn-close">×</button>
+
+            <h2>Detalles de la Tarea</h2>
+
+            <div id="detalleContenido" class="detalle-contenido"></div>
+
+            <button id="cerrarModalTareaBtn" class="btn">
+                Cerrar
+            </button>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

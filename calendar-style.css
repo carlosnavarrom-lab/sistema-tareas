@@ -1,0 +1,101 @@
+h1, h2, h3, h4, h5, h6{
+
+font-family:'Bebas Neue',sans-serif;
+letter-spacing: 1px;
+
+}
+
+.timeline{
+
+position:relative;
+border-left:4px solid #ddd;
+padding-left:90px;
+
+}
+
+/* EVENTO */
+
+.event{
+
+position:relative;
+background:white;
+padding:18px;
+margin-bottom:18px;
+border-radius:8px;
+box-shadow:0 5px 12px rgba(0,0,0,.15);
+
+}
+
+/* LINEA PRIORIDAD */
+
+.event::before{
+
+content:"";
+position:absolute;
+left:-40px;
+top:0;
+width:4px;
+height:100%;
+background:#6c63ff;
+
+}
+
+/* FECHA */
+
+.event-date{
+
+position:absolute;
+left:-90px;
+top:10px;
+width:50px;
+text-align:center;
+
+}
+
+.event-day{
+
+font-size:26px;
+font-weight:600;
+color:#777;
+line-height:1;
+
+}
+
+.event-month{
+
+font-size:12px;
+color:#aaa;
+
+}
+
+/* PRIORIDAD */
+
+.event.alta{
+
+background: repeating-linear-gradient(
+45deg,
+#fff,
+#fff 10px,
+#ffeaea 10px,
+#ffeaea 20px
+);
+
+}
+
+.event.alta::before{
+
+background:#ff4d4d;
+
+}
+
+.event.media::before{
+
+background:#f5a623;
+
+}
+
+.event.baja::before{
+
+background:#2ecc71;
+
+}
