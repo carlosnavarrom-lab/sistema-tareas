@@ -131,9 +131,16 @@ document.querySelectorAll(".task-list").forEach(c=>c.innerHTML="")
 
 tareas.forEach((t,i)=>{
 
+// no mostramos tareas completadas en el tablero
+if(t.estado === 'completada') return;
+
 let card=document.createElement("div")
 
 card.className="card "+t.prioridad.toLowerCase()
+
+// aplica color de línea según prioridad y estado
+let lineColor = getLineColor(t.prioridad, t.estado)
+card.style.setProperty('--line-color', lineColor)
 
 card.draggable = true
 
@@ -153,6 +160,11 @@ abrirDetallesTarea(i)
 
 })
 
+let completeBtn = ''
+if(t.estado === 'listo'){
+ completeBtn = `<button class="complete-btn" onclick="completarTarea(${i}); event.stopPropagation();">Completada</button>`
+}
+
 card.innerHTML=`
 
 <strong>${t.nombre}</strong>
@@ -162,6 +174,7 @@ card.innerHTML=`
 <button class="delete-btn" onclick="eliminarTarea(${i}); event.stopPropagation();">
 Eliminar
 </button>
+${completeBtn}
 
 `
 
@@ -180,6 +193,7 @@ localStorage.setItem("misTareas",JSON.stringify(tareas))
 renderTareas()
 
 }
+
 
 document.getElementById("btnOpenModal").onclick=()=>{
 document.getElementById("modalResponsables").style.display="flex"
@@ -257,6 +271,26 @@ modal.style.display="flex"
 
 cargarResponsables()
 renderTareas()
+
+
+function getLineColor(prio, estado){
+    if(estado === 'listo'){
+        return '#2ecc71';
+    }
+    switch(prio.toLowerCase()){
+        case 'alta': return '#ffcccc';      // rojo tenue
+        case 'media': return '#fff9cc';     // amarillo tenue
+        case 'baja': return '#ccffcc';      // verde tenue
+        default: return '#6c63ff';
+    }
+}
+
+function completarTarea(i){
+    tareas[i].estado = 'completada'
+    localStorage.setItem("misTareas",JSON.stringify(tareas))
+    renderTareas()
+}
+
 
 // Agregar drag and drop a las columnas
 document.querySelectorAll('.column').forEach(column => {
