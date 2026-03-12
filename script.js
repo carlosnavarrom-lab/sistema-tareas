@@ -1,31 +1,146 @@
+function enviarCorreo(responsable, correo, tarea){
+
+emailjs.send("SERVICE_ID","TEMPLATE_ID",{
+
+responsable: responsable,
+tarea: tarea.nombre,
+descripcion: tarea.descripcion,
+fecha: tarea.fechaLimite,
+email: correo
+
+})
+.then(function(response) {
+
+console.log("Correo enviado");
+
+}, function(error) {
+
+console.log("Error enviando correo", error);
+
+});
+
+}
+
+// 🔔 PEDIR PERMISO DE NOTIFICACIONES
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
 let tareas = JSON.parse(localStorage.getItem("misTareas")) || []
 let responsables = JSON.parse(localStorage.getItem("responsables")) || []
-
-const selectResponsable = document.getElementById("responsableSelect")
+let responsablesSeleccionados = []
 
 let tareaActualIndex = -1
 
 
 
-function cargarResponsables(){
+// 🔔 FUNCION PARA MOSTRAR NOTIFICACION
+function notificarNuevaTarea(tarea){
 
-if(!selectResponsable)return
+if (Notification.permission === "granted") {
 
-selectResponsable.innerHTML=""
+let responsablesTexto = (tarea.responsables && tarea.responsables.length > 0)
+  ? tarea.responsables.map(r => r.nombre).join(", ")
+  : "Sin responsable"
 
-responsables.forEach((r,i)=>{
+new Notification("Nueva tarea agregada", {
 
-let option=document.createElement("option")
-
-option.value=i
-option.textContent=r.nombre
-
-selectResponsable.appendChild(option)
+body: tarea.nombre + " asignada a " + responsablesTexto,
+icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png"
 
 })
 
-renderResponsables()
+}
 
+}
+
+
+
+function cargarResponsables(){
+
+renderResponsables()
+renderSeleccionResponsables()
+
+}
+
+function renderSeleccionResponsables(){
+
+const cont = document.getElementById("listaResponsablesCheckbox")
+if(!cont) return
+
+cont.innerHTML = ""
+
+responsables.forEach((r, i) => {
+    const div = document.createElement("label")
+    div.className = "responsable-checkbox"
+    
+    const isChecked = responsablesSeleccionados.some(rs => rs.nombre === r.nombre)
+    if(isChecked) div.classList.add("checked")
+    
+    div.innerHTML = `
+        <input type="checkbox" value="${i}" ${isChecked ? 'checked' : ''}>
+        <div>
+            <div style="font-weight:bold;">${r.nombre}</div>
+            <div style="font-size:12px; color:#666;">${r.gmail}</div>
+        </div>
+    `
+    
+    div.querySelector("input").addEventListener("change", (e) => {
+        if(e.target.checked) {
+            if(!responsablesSeleccionados.some(rs => rs.nombre === r.nombre)) {
+                responsablesSeleccionados.push(r)
+            }
+            div.classList.add("checked")
+        } else {
+            responsablesSeleccionados = responsablesSeleccionados.filter(rs => rs.nombre !== r.nombre)
+            div.classList.remove("checked")
+        }
+    })
+    
+    cont.appendChild(div)
+})
+
+}
+
+function mostrarSeleccionResponsables(){
+responsablesSeleccionados = []
+renderSeleccionResponsables()
+document.getElementById("modalSeleccionarResponsables").style.display = "flex"
+}
+
+function cerrarSeleccionResponsables(){
+document.getElementById("modalSeleccionarResponsables").style.display = "none"
+}
+
+function confirmarResponsables(){
+actualizarBadgesResponsables()
+cerrarSeleccionResponsables()
+}
+
+function actualizarBadgesResponsables(){
+const cont = document.getElementById("responsablesSeleccionados")
+cont.innerHTML = ""
+
+if(responsablesSeleccionados.length === 0) {
+    cont.innerHTML = '<span style="color:#999; font-style:italic;">Selecciona responsables...</span>'
+    return
+}
+
+responsablesSeleccionados.forEach(r => {
+    const badge = document.createElement("div")
+    badge.className = "responsable-badge"
+    badge.innerHTML = `
+        ${r.nombre}
+        <button type="button" onclick="quitarResponsable('${r.nombre}')" style="padding:0 4px;">×</button>
+    `
+    cont.appendChild(badge)
+})
+}
+
+function quitarResponsable(nombre){
+responsablesSeleccionados = responsablesSeleccionados.filter(r => r.nombre !== nombre)
+actualizarBadgesResponsables()
+renderSeleccionResponsables()
 }
 
 
@@ -113,7 +228,7 @@ document.getElementById("btnAgregarTarea").onclick=()=>{
 let tarea={
 
 nombre:document.getElementById("taskName").value,
-respNom:responsables[selectResponsable.value]?.nombre,
+responsables:responsablesSeleccionados,
 descripcion:document.getElementById("taskDesc").value,
 pidio:document.getElementById("taskPidio").value,
 fecha:document.getElementById("fecha").value,
@@ -127,16 +242,24 @@ tareas.push(tarea)
 
 localStorage.setItem("misTareas",JSON.stringify(tareas))
 
+// ENVIAR CORREO A TODOS LOS RESPONSABLES
+responsablesSeleccionados.forEach(resp => {
+  if(resp){
+    enviarCorreo(resp.nombre, resp.gmail, tarea)
+  }
+})
+
 document.getElementById("taskName").value=""
 document.getElementById("taskDesc").value=""
 document.getElementById("taskPidio").value=""
 document.getElementById("fecha").value=""
 document.getElementById("fechaLimite").value=""
+responsablesSeleccionados = []
+actualizarBadgesResponsables()
 
 renderTareas()
 
 }
-
 
 
 function renderTareas(){
@@ -176,11 +299,15 @@ if(t.estado === 'listo'){
 completeBtn = `<button class="complete-btn" onclick="completarTarea(${i}); event.stopPropagation();">Completada</button>`
 }
 
+let responsablesTexto = (t.responsables && t.responsables.length > 0) 
+  ? t.responsables.map(r => r.nombre).join(", ")
+  : "Sin asignar"
+
 card.innerHTML=`
 
 <strong>${t.nombre}</strong>
 
-<div>Responsable: ${t.respNom}</div>
+<div>Responsables: ${responsablesTexto}</div>
 
 <div style="display:flex; gap:5px; margin-top:8px;">
 <button class="delete-btn" onclick="eliminarTarea(${i}); event.stopPropagation();" style="flex:1;">
@@ -257,6 +384,10 @@ modal.style.display="flex"
 
 function mostrarDetallesLectura(tarea, contenido){
 
+let responsablesTexto = (tarea.responsables && tarea.responsables.length > 0)
+  ? tarea.responsables.map(r => r.nombre).join(", ")
+  : "Sin asignar"
+
 contenido.innerHTML=`
 
 <div class="detalle-item">
@@ -265,8 +396,8 @@ contenido.innerHTML=`
 </div>
 
 <div class="detalle-item">
-<div class="detalle-label">Responsable</div>
-<div class="detalle-valor">${tarea.respNom||'Sin asignar'}</div>
+<div class="detalle-label">Responsables</div>
+<div class="detalle-valor">${responsablesTexto}</div>
 </div>
 
 <div class="detalle-item">
@@ -300,129 +431,6 @@ contenido.innerHTML=`
 </div>
 
 `
-
-}
-
-
-
-function abrirEditarTarea(indice){
-
-tareaActualIndex = indice
-
-const tarea = tareas[indice]
-
-document.getElementById("detalleContenido").innerHTML = construirFormularioEdicion(tarea)
-
-document.getElementById("btnEditarTarea").style.display="none"
-document.getElementById("btnGuardarTarea").style.display="block"
-
-document.getElementById("modalTareaDetail").style.display="flex"
-
-}
-
-
-
-function editarTarea(){
-
-if(tareaActualIndex === -1) return
-
-const tarea = tareas[tareaActualIndex]
-
-document.getElementById("detalleContenido").innerHTML = construirFormularioEdicion(tarea)
-
-document.getElementById("btnEditarTarea").style.display="none"
-document.getElementById("btnGuardarTarea").style.display="block"
-
-}
-
-
-
-function construirFormularioEdicion(tarea){
-
-let responsablesOptions = '<option value="">Selecciona responsable</option>'
-
-responsables.forEach((r,i)=>{
-
-const selected = r.nombre === tarea.respNom ? 'selected' : ''
-
-responsablesOptions += `<option value="${i}" ${selected}>${r.nombre}</option>`
-
-})
-
-return `
-
-<div class="detalle-form">
-
-<label>Título</label>
-<input id="editNombre" value="${tarea.nombre}">
-
-<label>Responsable</label>
-<select id="editResponsable">
-${responsablesOptions}
-</select>
-
-<label>Quién pidió</label>
-<input id="editPidio" value="${tarea.pidio||''}">
-
-<label>Descripción</label>
-<textarea id="editDescripcion">${tarea.descripcion||''}</textarea>
-
-<label>Fecha inicio</label>
-<input type="date" id="editFecha" value="${tarea.fecha||''}">
-
-<label>Fecha límite</label>
-<input type="date" id="editFechaLimite" value="${tarea.fechaLimite||''}">
-
-<label>Prioridad</label>
-<select id="editPrioridad">
-<option ${tarea.prioridad=='Baja'?'selected':''}>Baja</option>
-<option ${tarea.prioridad=='Media'?'selected':''}>Media</option>
-<option ${tarea.prioridad=='Alta'?'selected':''}>Alta</option>
-</select>
-
-<label>Estado</label>
-<select id="editEstado">
-<option value="pendiente" ${tarea.estado=='pendiente'?'selected':''}>Pendiente</option>
-<option value="en-curso" ${tarea.estado=='en-curso'?'selected':''}>En curso</option>
-<option value="revision" ${tarea.estado=='revision'?'selected':''}>Revisión</option>
-<option value="listo" ${tarea.estado=='listo'?'selected':''}>Listo</option>
-</select>
-
-</div>
-
-`
-
-}
-
-
-
-function guardarTareaEditada(){
-
-const tarea = tareas[tareaActualIndex]
-
-tarea.nombre = document.getElementById("editNombre").value
-
-const respIndex = document.getElementById("editResponsable").value
-
-if(respIndex !== ""){
-tarea.respNom = responsables[respIndex]?.nombre
-}
-
-tarea.pidio = document.getElementById("editPidio").value
-tarea.descripcion = document.getElementById("editDescripcion").value
-tarea.fecha = document.getElementById("editFecha").value
-tarea.fechaLimite = document.getElementById("editFechaLimite").value
-tarea.prioridad = document.getElementById("editPrioridad").value
-tarea.estado = document.getElementById("editEstado").value
-
-localStorage.setItem("misTareas",JSON.stringify(tareas))
-
-mostrarDetallesLectura(tarea, document.getElementById("detalleContenido"))
-
-document.getElementById("btnEditarTarea").style.display="block"
-document.getElementById("btnGuardarTarea").style.display="none"
-
-renderTareas()
 
 }
 
@@ -483,6 +491,18 @@ renderTareas()
 
 })
 
+// EVENT LISTENERS PARA SELECCIONAR RESPONSABLES
+document.getElementById("btnAbrirSeleccionResponsables").onclick=()=>{
+  mostrarSeleccionResponsables()
+}
+
+document.getElementById("btnConfirmarResponsables").onclick=()=>{
+  confirmarResponsables()
+}
+
+document.getElementById("btnCerrarSeleccion").onclick=()=>{
+  cerrarSeleccionResponsables()
+}
 
 
 cargarResponsables()
